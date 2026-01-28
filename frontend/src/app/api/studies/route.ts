@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Pool } from "pg";
+import { neon } from "@neondatabase/serverless";
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-});
+const sql = neon(process.env.DATABASE_URL!);
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -19,74 +16,51 @@ export async function GET(request: NextRequest) {
   const offset = (page - 1) * limit;
 
   try {
+    // Build WHERE conditions
     const conditions: string[] = [];
-    const params: (string | number)[] = [];
-    let paramIndex = 1;
-
-    // Text search
+    
     if (q) {
+      const searchTerm = `%${q}%`;
       conditions.push(`(
-        brief_title ILIKE $${paramIndex} OR 
-        official_title ILIKE $${paramIndex} OR 
-        lead_sponsor ILIKE $${paramIndex} OR 
-        conditions::text ILIKE $${paramIndex} OR
-        nct_id ILIKE $${paramIndex}
+        brief_title ILIKE '${searchTerm}' OR 
+        official_title ILIKE '${searchTerm}' OR 
+        lead_sponsor ILIKE '${searchTerm}' OR 
+        conditions::text ILIKE '${searchTerm}' OR
+        nct_id ILIKE '${searchTerm}'
       )`);
-      params.push(`%${q}%`);
-      paramIndex++;
     }
-
-    // Filters
     if (status) {
-      conditions.push(`overall_status = $${paramIndex}`);
-      params.push(status);
-      paramIndex++;
+      conditions.push(`overall_status = '${status}'`);
     }
     if (phase) {
-      conditions.push(`phase = $${paramIndex}`);
-      params.push(phase);
-      paramIndex++;
+      conditions.push(`phase = '${phase}'`);
     }
     if (studyType) {
-      conditions.push(`study_type = $${paramIndex}`);
-      params.push(studyType);
-      paramIndex++;
+      conditions.push(`study_type = '${studyType}'`);
     }
     if (sponsorClass) {
-      conditions.push(`lead_sponsor_class = $${paramIndex}`);
-      params.push(sponsorClass);
-      paramIndex++;
+      conditions.push(`lead_sponsor_class = '${sponsorClass}'`);
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
     // Count total
-    const countResult = await pool.query(
-      `SELECT COUNT(*) FROM studies ${whereClause}`,
-      params
-    );
-    const total = parseInt(countResult.rows[0].count);
+    const countResult = await sql`SELECT COUNT(*)::int as count FROM studies ${whereClause ? sql.unsafe(whereClause) : sql``}`;
+    const total = countResult[0]?.count || 0;
 
     // Fetch studies
-    const studiesResult = await pool.query(
-      `SELECT 
+    const studies = await sql`
+      SELECT 
         nct_id, brief_title, official_title, overall_status, study_type, phase,
         conditions, interventions, brief_summary, eligibility_criteria,
         eligibility_sex, eligibility_min_age, eligibility_max_age,
         enrollment_count, start_date, completion_date, lead_sponsor,
         lead_sponsor_class, locations
       FROM studies 
-      ${whereClause}
+      ${whereClause ? sql.unsafe(whereClause) : sql``}
       ORDER BY last_update_date DESC NULLS LAST
-      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
-      [...params, limit, offset]
-    );
-
-    const studies = studiesResult.rows.map((row) => ({
-      ...row,
-      start_date: row.start_date?.toISOString?.()?.split("T")[0] || row.start_date,
-      completion_date: row.completion_date?.toISOString?.()?.split("T")[0] || row.completion_date,
-    }));
+      LIMIT ${limit} OFFSET ${offset}
+    `;
 
     return NextResponse.json({
       studies,
@@ -97,7 +71,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Database error:", error);
     return NextResponse.json(
-      { error: "Database error", studies: [], total: 0 },
+      { error: "Database error", studies: [], total: 0, page, limit },
       { status: 500 }
     );
   }
