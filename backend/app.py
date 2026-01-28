@@ -119,6 +119,79 @@ def health():
     return {"status": "ok", "study_count": count}
 
 
+@app.get("/api/studies")
+def list_studies(
+    q: Optional[str] = None,
+    status: Optional[str] = None,
+    phase: Optional[str] = None,
+    study_type: Optional[str] = None,
+    sponsor_class: Optional[str] = None,
+    page: int = 1,
+    limit: int = 20,
+):
+    """List and filter studies (basic text search, no embeddings required)."""
+    with Session(engine) as session:
+        query = session.query(Study)
+        
+        # Text search across multiple fields
+        if q:
+            search_term = f"%{q}%"
+            query = query.filter(
+                (Study.brief_title.ilike(search_term)) |
+                (Study.official_title.ilike(search_term)) |
+                (Study.lead_sponsor.ilike(search_term)) |
+                (func.cast(Study.conditions, text("text")).ilike(search_term)) |
+                (Study.nct_id.ilike(search_term))
+            )
+        
+        # Filters
+        if status:
+            query = query.filter(Study.overall_status == status)
+        if phase:
+            query = query.filter(Study.phase == phase)
+        if study_type:
+            query = query.filter(Study.study_type == study_type)
+        if sponsor_class:
+            query = query.filter(Study.lead_sponsor_class == sponsor_class)
+        
+        # Count total
+        total = query.count()
+        
+        # Paginate
+        offset = (page - 1) * limit
+        studies = query.order_by(Study.last_update_date.desc().nullslast()).offset(offset).limit(limit).all()
+        
+        return {
+            "studies": [
+                {
+                    "nct_id": s.nct_id,
+                    "brief_title": s.brief_title,
+                    "official_title": s.official_title,
+                    "overall_status": s.overall_status,
+                    "study_type": s.study_type,
+                    "phase": s.phase,
+                    "conditions": s.conditions,
+                    "interventions": s.interventions,
+                    "brief_summary": s.brief_summary,
+                    "eligibility_criteria": s.eligibility_criteria,
+                    "eligibility_sex": s.eligibility_sex,
+                    "eligibility_min_age": s.eligibility_min_age,
+                    "eligibility_max_age": s.eligibility_max_age,
+                    "enrollment_count": s.enrollment_count,
+                    "start_date": str(s.start_date) if s.start_date else None,
+                    "completion_date": str(s.completion_date) if s.completion_date else None,
+                    "lead_sponsor": s.lead_sponsor,
+                    "lead_sponsor_class": s.lead_sponsor_class,
+                    "locations": s.locations,
+                }
+                for s in studies
+            ],
+            "total": total,
+            "page": page,
+            "limit": limit,
+        }
+
+
 @app.post("/api/search")
 def search(req: SearchRequest):
     """Semantic search over studies."""

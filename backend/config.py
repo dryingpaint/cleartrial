@@ -1,9 +1,12 @@
 """Configuration loaded from environment variables."""
 
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env from parent directory (project root)
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(env_path)
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://cleartrial:cleartrial@localhost:5432/cleartrial")
 DATABASE_URL_SYNC = os.getenv("DATABASE_URL_SYNC", "postgresql://cleartrial:cleartrial@localhost:5432/cleartrial")
