@@ -20,6 +20,7 @@ import { Activity, Users, TrendingUp, Beaker } from "lucide-react";
 interface Stats {
   total: number;
   recruiting: number;
+  topCondition?: string;
   byStatus: { name: string; value: number }[];
   byPhase: { name: string; value: number }[];
   topConditions: { name: string; value: number }[];
@@ -117,7 +118,7 @@ export function Dashboard() {
     );
   }
 
-  const topCondition = stats.topConditions[0]?.name || "N/A";
+  const topCondition = stats.topCondition || stats.topConditions[0]?.name || "N/A";
 
   return (
     <div className="space-y-6 mb-8">
