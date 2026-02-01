@@ -247,9 +247,10 @@ export function Dashboard() {
           <ResponsiveContainer width="100%" height={250}>
             <BarChart 
               data={stats.byPhase.filter((p) => p.name !== "Not Applicable" && p.name !== "Other")}
-              onClick={(data) => {
-                if (data?.activePayload?.[0]?.payload?.name) {
-                  const clickedPhase = data.activePayload[0].payload.name;
+              onClick={(data: unknown) => {
+                const d = data as { activePayload?: { payload?: { name?: string } }[] };
+                if (d?.activePayload?.[0]?.payload?.name) {
+                  const clickedPhase = d.activePayload[0].payload.name;
                   setFilter("phase", filters.phase === clickedPhase ? null : clickedPhase);
                 }
               }}
@@ -331,9 +332,10 @@ export function Dashboard() {
             <BarChart 
               data={stats.topConditions.slice(0, 8)} 
               layout="vertical"
-              onClick={(data) => {
-                if (data?.activePayload?.[0]?.payload?.name) {
-                  const clickedCondition = data.activePayload[0].payload.name;
+              onClick={(data: unknown) => {
+                const d = data as { activePayload?: { payload?: { name?: string } }[] };
+                if (d?.activePayload?.[0]?.payload?.name) {
+                  const clickedCondition = d.activePayload[0].payload.name;
                   setFilter("condition", filters.condition === clickedCondition ? null : clickedCondition);
                 }
               }}
@@ -374,9 +376,10 @@ export function Dashboard() {
           <ResponsiveContainer width="100%" height={250}>
             <BarChart 
               data={stats.byYear.filter((y) => y.year >= 2010)}
-              onClick={(data) => {
-                if (data?.activePayload?.[0]?.payload?.year) {
-                  const clickedYear = String(data.activePayload[0].payload.year);
+              onClick={(data: unknown) => {
+                const d = data as { activePayload?: { payload?: { year?: number } }[] };
+                if (d?.activePayload?.[0]?.payload?.year) {
+                  const clickedYear = String(d.activePayload[0].payload.year);
                   setFilter("year", filters.year === clickedYear ? null : clickedYear);
                 }
               }}

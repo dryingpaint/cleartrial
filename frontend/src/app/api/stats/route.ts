@@ -74,14 +74,14 @@ export async function GET(request: Request) {
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
     // Get total count
-    const totalResult = await sql.unsafe(`SELECT COUNT(*)::int as count FROM studies ${whereClause}`);
+    const totalResult = await sql.unsafe(`SELECT COUNT(*)::int as count FROM studies ${whereClause}`) as unknown as {count: number}[];
     const total = totalResult[0]?.count || 0;
 
     // Recruiting count
     const recruitingWhere = whereClause 
       ? `${whereClause} AND overall_status = 'RECRUITING'`
       : `WHERE overall_status = 'RECRUITING'`;
-    const recruitingResult = await sql.unsafe(`SELECT COUNT(*)::int as count FROM studies ${recruitingWhere}`);
+    const recruitingResult = await sql.unsafe(`SELECT COUNT(*)::int as count FROM studies ${recruitingWhere}`) as unknown as {count: number}[];
 
     // Status breakdown
     const statusResult = await sql.unsafe(`
@@ -190,7 +190,7 @@ export async function GET(request: Request) {
       ORDER BY 1
     `);
 
-    const topCondition = conditionsResult[0]?.name || "N/A";
+    const topCondition = (conditionsResult as unknown as {name: string; value: number}[])[0]?.name || "N/A";
 
     return NextResponse.json({
       total,
