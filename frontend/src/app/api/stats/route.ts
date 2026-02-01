@@ -39,42 +39,35 @@ export async function GET() {
 
     // Phase breakdown (properly categorized)
     const phaseResult = await sql`
-      SELECT 
-        CASE 
-          WHEN phase = 'PHASE1' THEN 'Phase 1'
-          WHEN phase = 'PHASE2' THEN 'Phase 2'
-          WHEN phase = 'PHASE3' THEN 'Phase 3'
-          WHEN phase = 'PHASE4' THEN 'Phase 4'
-          WHEN phase = 'EARLY_PHASE1' THEN 'Early Phase 1'
-          WHEN phase LIKE '%PHASE1%' AND phase LIKE '%PHASE2%' THEN 'Phase 1/2'
-          WHEN phase LIKE '%PHASE2%' AND phase LIKE '%PHASE3%' THEN 'Phase 2/3'
-          WHEN phase IS NULL OR phase = 'NA' THEN 'Not Applicable'
-          ELSE 'Other'
-        END as name,
-        COUNT(*)::int as value
-      FROM studies
-      GROUP BY 
-        CASE 
-          WHEN phase = 'PHASE1' THEN 'Phase 1'
-          WHEN phase = 'PHASE2' THEN 'Phase 2'
-          WHEN phase = 'PHASE3' THEN 'Phase 3'
-          WHEN phase = 'PHASE4' THEN 'Phase 4'
-          WHEN phase = 'EARLY_PHASE1' THEN 'Early Phase 1'
-          WHEN phase LIKE '%PHASE1%' AND phase LIKE '%PHASE2%' THEN 'Phase 1/2'
-          WHEN phase LIKE '%PHASE2%' AND phase LIKE '%PHASE3%' THEN 'Phase 2/3'
-          WHEN phase IS NULL OR phase = 'NA' THEN 'Not Applicable'
-          ELSE 'Other'
-        END
+      SELECT name, SUM(value)::int as value FROM (
+        SELECT 
+          CASE 
+            WHEN phase = 'PHASE1' THEN 'Phase 1'
+            WHEN phase = 'PHASE2' THEN 'Phase 2'
+            WHEN phase = 'PHASE3' THEN 'Phase 3'
+            WHEN phase = 'PHASE4' THEN 'Phase 4'
+            WHEN phase = 'EARLY_PHASE1' THEN 'Early Phase 1'
+            WHEN phase LIKE '%PHASE1%' AND phase LIKE '%PHASE2%' THEN 'Phase 1/2'
+            WHEN phase LIKE '%PHASE2%' AND phase LIKE '%PHASE3%' THEN 'Phase 2/3'
+            WHEN phase IS NULL OR phase = 'NA' THEN 'Not Applicable'
+            ELSE 'Other'
+          END as name,
+          COUNT(*)::int as value
+        FROM studies
+        GROUP BY phase
+      ) sub
+      GROUP BY name
       ORDER BY 
-        CASE 
-          WHEN name = 'Early Phase 1' THEN 1
-          WHEN name = 'Phase 1' THEN 2
-          WHEN name = 'Phase 1/2' THEN 3
-          WHEN name = 'Phase 2' THEN 4
-          WHEN name = 'Phase 2/3' THEN 5
-          WHEN name = 'Phase 3' THEN 6
-          WHEN name = 'Phase 4' THEN 7
-          ELSE 8
+        CASE name
+          WHEN 'Early Phase 1' THEN 1
+          WHEN 'Phase 1' THEN 2
+          WHEN 'Phase 1/2' THEN 3
+          WHEN 'Phase 2' THEN 4
+          WHEN 'Phase 2/3' THEN 5
+          WHEN 'Phase 3' THEN 6
+          WHEN 'Phase 4' THEN 7
+          WHEN 'Not Applicable' THEN 8
+          ELSE 9
         END
     `;
 
