@@ -9,6 +9,11 @@ export async function GET() {
     const totalResult = await sql`SELECT COUNT(*)::int as count FROM studies`;
     const total = totalResult[0]?.count || 0;
 
+    // Recruiting count
+    const recruitingResult = await sql`
+      SELECT COUNT(*)::int as count FROM studies WHERE overall_status = 'RECRUITING'
+    `;
+
     // Status breakdown
     const statusResult = await sql`
       SELECT overall_status as name, COUNT(*)::int as value 
@@ -16,38 +21,25 @@ export async function GET() {
       WHERE overall_status IS NOT NULL
       GROUP BY overall_status 
       ORDER BY value DESC
+      LIMIT 10
     `;
 
-    // Phase breakdown
+    // Phase breakdown (simplified)
     const phaseResult = await sql`
       SELECT 
-        CASE 
-          WHEN phase LIKE '%PHASE1%' AND phase NOT LIKE '%PHASE2%' THEN 'Phase 1'
-          WHEN phase LIKE '%PHASE2%' AND phase NOT LIKE '%PHASE3%' THEN 'Phase 2'
-          WHEN phase LIKE '%PHASE3%' AND phase NOT LIKE '%PHASE4%' THEN 'Phase 3'
-          WHEN phase LIKE '%PHASE4%' THEN 'Phase 4'
-          WHEN phase = 'EARLY_PHASE1' THEN 'Early Phase 1'
-          WHEN phase = 'NA' OR phase IS NULL THEN 'N/A'
-          ELSE 'Other'
-        END as name,
+        COALESCE(phase, 'N/A') as name,
         COUNT(*)::int as value
       FROM studies
-      GROUP BY 1
-      ORDER BY 
-        CASE 
-          WHEN name = 'Early Phase 1' THEN 1
-          WHEN name = 'Phase 1' THEN 2
-          WHEN name = 'Phase 2' THEN 3
-          WHEN name = 'Phase 3' THEN 4
-          WHEN name = 'Phase 4' THEN 5
-          ELSE 6
-        END
+      GROUP BY phase
+      ORDER BY value DESC
+      LIMIT 10
     `;
 
-    // Top conditions (flatten JSON array and count)
+    // Top conditions (with null check)
     const conditionsResult = await sql`
       SELECT condition as name, COUNT(*)::int as value
       FROM studies, jsonb_array_elements_text(conditions) as condition
+      WHERE conditions IS NOT NULL AND jsonb_typeof(conditions) = 'array'
       GROUP BY condition
       ORDER BY value DESC
       LIMIT 10
@@ -56,17 +48,12 @@ export async function GET() {
     // Sponsor class breakdown
     const sponsorResult = await sql`
       SELECT 
-        CASE 
-          WHEN lead_sponsor_class = 'INDUSTRY' THEN 'Industry'
-          WHEN lead_sponsor_class = 'NIH' THEN 'NIH'
-          WHEN lead_sponsor_class = 'FED' THEN 'Federal'
-          WHEN lead_sponsor_class = 'OTHER' THEN 'Academic/Other'
-          ELSE 'Unknown'
-        END as name,
+        COALESCE(lead_sponsor_class, 'Unknown') as name,
         COUNT(*)::int as value
       FROM studies
-      GROUP BY 1
+      GROUP BY lead_sponsor_class
       ORDER BY value DESC
+      LIMIT 5
     `;
 
     // Studies by year (using start_date)
@@ -75,27 +62,27 @@ export async function GET() {
         EXTRACT(YEAR FROM start_date)::int as year,
         COUNT(*)::int as count
       FROM studies
-      WHERE start_date IS NOT NULL AND EXTRACT(YEAR FROM start_date) >= 2000
+      WHERE start_date IS NOT NULL 
+        AND EXTRACT(YEAR FROM start_date) >= 2010
+        AND EXTRACT(YEAR FROM start_date) <= 2026
       GROUP BY 1
       ORDER BY 1
-    `;
-
-    // Recruiting count
-    const recruitingResult = await sql`
-      SELECT COUNT(*)::int as count FROM studies WHERE overall_status = 'RECRUITING'
     `;
 
     return NextResponse.json({
       total,
       recruiting: recruitingResult[0]?.count || 0,
-      byStatus: statusResult,
-      byPhase: phaseResult,
-      topConditions: conditionsResult,
-      bySponsor: sponsorResult,
-      byYear: yearResult,
+      byStatus: statusResult || [],
+      byPhase: phaseResult || [],
+      topConditions: conditionsResult || [],
+      bySponsor: sponsorResult || [],
+      byYear: yearResult || [],
     });
   } catch (error) {
     console.error("Stats error:", error);
-    return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 });
+    return NextResponse.json({ 
+      error: "Failed to fetch stats",
+      details: error instanceof Error ? error.message : "Unknown error"
+    }, { status: 500 });
   }
 }

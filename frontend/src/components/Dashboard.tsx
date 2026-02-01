@@ -108,7 +108,13 @@ export function Dashboard() {
     );
   }
 
-  if (!stats) return null;
+  if (!stats || stats.error) {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
+        <p className="text-yellow-800">Unable to load analytics. Search still works below.</p>
+      </div>
+    );
+  }
 
   const topCondition = stats.topConditions[0]?.name || "N/A";
 
