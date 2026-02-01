@@ -153,7 +153,7 @@ export function Dashboard() {
               <XAxis dataKey="name" tick={{ fontSize: 12 }} />
               <YAxis tickFormatter={formatNumber} tick={{ fontSize: 12 }} />
               <Tooltip
-                formatter={(value: number) => [value.toLocaleString(), "Studies"]}
+                formatter={(value) => [(value as number).toLocaleString(), 'Studies']}
                 contentStyle={{ borderRadius: 8 }}
               />
               <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
@@ -175,7 +175,7 @@ export function Dashboard() {
                 paddingAngle={2}
                 dataKey="value"
                 label={({ name, percent }) =>
-                  `${name.replace(/_/g, " ").slice(0, 10)}${name.length > 10 ? "..." : ""} ${(percent * 100).toFixed(0)}%`
+                  `${(name || "").replace(/_/g, " ").slice(0, 10)}${(name || "").length > 10 ? "..." : ""} ${((percent || 0) * 100).toFixed(0)}%`
                 }
                 labelLine={false}
               >
@@ -187,7 +187,7 @@ export function Dashboard() {
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value: number) => [value.toLocaleString(), "Studies"]}
+                formatter={(value) => [(value as number).toLocaleString(), 'Studies']}
                 contentStyle={{ borderRadius: 8 }}
               />
             </PieChart>
@@ -212,7 +212,7 @@ export function Dashboard() {
                 tickFormatter={(v) => (v.length > 18 ? v.slice(0, 18) + "..." : v)}
               />
               <Tooltip
-                formatter={(value: number) => [value.toLocaleString(), "Studies"]}
+                formatter={(value) => [(value as number).toLocaleString(), 'Studies']}
                 contentStyle={{ borderRadius: 8 }}
               />
               <Bar dataKey="value" fill="#ec4899" radius={[0, 4, 4, 0]} />
@@ -229,7 +229,7 @@ export function Dashboard() {
               <XAxis dataKey="year" tick={{ fontSize: 12 }} />
               <YAxis tickFormatter={formatNumber} tick={{ fontSize: 12 }} />
               <Tooltip
-                formatter={(value: number) => [value.toLocaleString(), "Studies"]}
+                formatter={(value) => [(value as number).toLocaleString(), 'Studies']}
                 contentStyle={{ borderRadius: 8 }}
               />
               <Line
