@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Search, Filter, X, Loader2 } from "lucide-react";
 import { StudyCard } from "@/components/StudyCard";
+import { Dashboard } from "@/components/Dashboard";
 import { Study, SearchFilters } from "@/types/study";
 import { cn } from "@/lib/utils";
 
@@ -212,8 +213,13 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Results */}
+      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-6">
+        {/* Dashboard */}
+        <Dashboard />
+
+        {/* Search Results */}
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Browse Studies</h2>
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
