@@ -25,6 +25,7 @@ interface Stats {
   topConditions: { name: string; value: number }[];
   bySponsor: { name: string; value: number }[];
   byYear: { year: number; count: number }[];
+  error?: string;
 }
 
 const STATUS_COLORS: Record<string, string> = {
