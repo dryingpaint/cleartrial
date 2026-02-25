@@ -176,7 +176,7 @@ export function Dashboard() {
     );
   }
 
-  const topCondition = stats.topCondition || stats.topConditions[0]?.name || "N/A";
+  const topCondition = stats.topCondition || (Array.isArray(stats.topConditions) && stats.topConditions[0]?.name) || "N/A";
 
   return (
     <div className="space-y-6 mb-8">
@@ -246,7 +246,7 @@ export function Dashboard() {
           </h3>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart 
-              data={stats.byPhase.filter((p) => p.name !== "Not Applicable" && p.name !== "Other")}
+              data={Array.isArray(stats.byPhase) ? stats.byPhase.filter((p) => p.name !== "Not Applicable" && p.name !== "Other") : []}
               onClick={(data: unknown) => {
                 const d = data as { activePayload?: { payload?: { name?: string } }[] };
                 if (d?.activePayload?.[0]?.payload?.name) {
@@ -264,7 +264,7 @@ export function Dashboard() {
                 contentStyle={{ borderRadius: 8 }}
               />
               <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                {stats.byPhase.filter((p) => p.name !== "Not Applicable" && p.name !== "Other").map((entry) => (
+                {Array.isArray(stats.byPhase) && stats.byPhase.filter((p) => p.name !== "Not Applicable" && p.name !== "Other").map((entry) => (
                   <Cell 
                     key={entry.name} 
                     fill={PHASE_COLORS[entry.name] || "#6366f1"}
@@ -285,7 +285,7 @@ export function Dashboard() {
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
-                data={stats.byStatus.slice(0, 6)}
+                data={Array.isArray(stats.byStatus) ? stats.byStatus.slice(0, 6) : []}
                 cx="50%"
                 cy="50%"
                 innerRadius={60}
@@ -303,7 +303,7 @@ export function Dashboard() {
                 }
                 labelLine={false}
               >
-                {stats.byStatus.slice(0, 6).map((entry) => (
+                {Array.isArray(stats.byStatus) && stats.byStatus.slice(0, 6).map((entry) => (
                   <Cell
                     key={entry.name}
                     fill={STATUS_COLORS[entry.name] || STATUS_COLORS.Unknown}
@@ -330,7 +330,7 @@ export function Dashboard() {
           </h3>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart 
-              data={stats.topConditions.slice(0, 8)} 
+              data={Array.isArray(stats.topConditions) ? stats.topConditions.slice(0, 8) : []}
               layout="vertical"
               onClick={(data: unknown) => {
                 const d = data as { activePayload?: { payload?: { name?: string } }[] };
@@ -355,7 +355,7 @@ export function Dashboard() {
                 contentStyle={{ borderRadius: 8 }}
               />
               <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                {stats.topConditions.slice(0, 8).map((entry) => (
+                {Array.isArray(stats.topConditions) && stats.topConditions.slice(0, 8).map((entry) => (
                   <Cell 
                     key={entry.name} 
                     fill="#ec4899"
@@ -413,7 +413,7 @@ export function Dashboard() {
           {loading && <span className="ml-2 text-sm text-gray-400">(updating...)</span>}
         </h3>
         <div className="flex flex-wrap gap-3">
-          {stats.bySponsor.map((sponsor, i) => (
+          {Array.isArray(stats.bySponsor) && stats.bySponsor.map((sponsor, i) => (
             <button
               key={sponsor.name}
               onClick={() => setFilter("sponsor", filters.sponsor === sponsor.name ? null : sponsor.name)}
