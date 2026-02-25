@@ -230,7 +230,7 @@ export function Dashboard() {
         />
         <StatCard
           title="This Year"
-          value={stats.byYear.find((y) => y.year === new Date().getFullYear())?.count || 0}
+          value={Array.isArray(stats.byYear) ? (stats.byYear.find((y) => y.year === new Date().getFullYear())?.count || 0) : 0}
           icon={TrendingUp}
           color="bg-orange-500"
         />
@@ -375,7 +375,7 @@ export function Dashboard() {
           </h3>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart 
-              data={stats.byYear.filter((y) => y.year >= 2010)}
+              data={Array.isArray(stats.byYear) ? stats.byYear.filter((y) => y.year >= 2010) : []}
               onClick={(data: unknown) => {
                 const d = data as { activePayload?: { payload?: { year?: number } }[] };
                 if (d?.activePayload?.[0]?.payload?.year) {
@@ -393,7 +393,7 @@ export function Dashboard() {
                 contentStyle={{ borderRadius: 8 }}
               />
               <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                {stats.byYear.filter((y) => y.year >= 2010).map((entry) => (
+                {Array.isArray(stats.byYear) && stats.byYear.filter((y) => y.year >= 2010).map((entry) => (
                   <Cell 
                     key={entry.year} 
                     fill="#f97316"
